@@ -1,10 +1,11 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 set TOOL_ROOT=%USERPROFILE%\.grave-client\tools
 set JAVA_DIR=%TOOL_ROOT%\jdk-17
 set JAVA_EXE=%JAVA_DIR%\bin\java.exe
 set BUILD_DIR=%USERPROFILE%\.grave-client\build
+set SOURCE_FILES=
 
 if not exist "%JAVA_EXE%" (
   echo Java 17 is required but was not found.
@@ -14,7 +15,12 @@ if not exist "%JAVA_EXE%" (
 )
 
 mkdir "%BUILD_DIR%" 2>nul
-"%JAVA_DIR%\bin\javac.exe" -d "%BUILD_DIR%" -sourcepath src/main/java src/main/java/com/grave/launcher/*.java
+
+for /r src\main\java %%f in (*.java) do (
+  set SOURCE_FILES=!SOURCE_FILES! "%%f"
+)
+
+"%JAVA_DIR%\bin\javac.exe" -d "%BUILD_DIR%" %SOURCE_FILES%
 if errorlevel 1 (
   echo Compilation failed.
   pause

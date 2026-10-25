@@ -4,13 +4,13 @@ setlocal enabledelayedexpansion
 set TOOL_ROOT=%USERPROFILE%\.grave-client\tools
 set JAVA_DIR=%TOOL_ROOT%\jdk-17
 set JAVA_EXE=%JAVA_DIR%\bin\java.exe
-set JDK_ZIP=%TEMP%\grave-jdk17.zip
 set BUILD_DIR=%USERPROFILE%\.grave-client\build
+set SOURCE_FILES=
 
 if not exist "%JAVA_EXE%" (
   echo Java 17 not found. Downloading local JDK...
   mkdir "%TOOL_ROOT%" 2>nul
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; $url='https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.zip'; Invoke-WebRequest -Uri $url -OutFile '%JDK_ZIP%'; Expand-Archive -Path '%JDK_ZIP%' -DestinationPath '%TOOL_ROOT%' -Force; Get-ChildItem -Path '%TOOL_ROOT%' | Where-Object { $_.Name -match 'jdk' } | ForEach-Object { Rename-Item -Path $_.FullName -NewName 'jdk-17' }"
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; $url='https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.zip'; $zip='%TEMP%\grave-jdk17.zip'; Invoke-WebRequest -Uri $url -OutFile $zip; $dest='%TOOL_ROOT%'; Expand-Archive -Path $zip -DestinationPath $dest -Force; Get-ChildItem -Path $dest | Where-Object { $_.Name -match 'jdk' } | ForEach-Object { Rename-Item -Path $_.FullName -NewName 'jdk-17' }"
 )
 
 if not exist "%JAVA_EXE%" (
@@ -28,9 +28,12 @@ mkdir "%BUILD_DIR%" 2>nul
 
 echo Created install folders at %USERPROFILE%\.grave-client
 
+for /r src\main\java %%f in (*.java) do (
+  set SOURCE_FILES=!SOURCE_FILES! "%%f"
+)
+
 echo Compiling launcher with local JDK...
-"%JAVA_EXE%" -version
-"%JAVA_DIR%\bin\javac.exe" -d "%BUILD_DIR%" -sourcepath src/main/java src/main/java/com/grave/launcher/*.java
+"%JAVA_DIR%\bin\javac.exe" -d "%BUILD_DIR%" %SOURCE_FILES%
 if errorlevel 1 (
   echo Compilation failed.
   pause
