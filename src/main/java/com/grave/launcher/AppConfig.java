@@ -34,7 +34,7 @@ public class AppConfig {
             config.javaExecutable = props.getProperty("javaExecutable", config.javaExecutable);
             config.clientExecutable = props.getProperty("clientExecutable", config.clientExecutable);
             config.clientJar = props.getProperty("clientJar", config.clientJar);
-            config.firstRun = Boolean.parseBoolean(props.getProperty("firstRun", "false"));
+            config.firstRun = Boolean.parseBoolean(props.getProperty("firstRun", "true"));
 
             String rawArgs = props.getProperty("launchArgs", "");
             if (!rawArgs.isBlank()) {
@@ -92,10 +92,6 @@ public class AppConfig {
 
     public String getClientExecutable() {
         return clientExecutable;
-    }
-
-    public void setClientExecutable(String clientExecutable) {
-        this.clientExecutable = clientExecutable;
     }
 
     public String getClientJar() {
