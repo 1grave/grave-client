@@ -1,38 +1,38 @@
 # Grave Client
 
-A dark, purple-themed Minecraft launcher and installer concept built to match the look and feel of a premium client UI.
+A dark, purple-themed Minecraft launcher and client project built around a Lunar-style layout and Fabric-based UI/HUD approach.
 
-## Run it
+## What is in this repo
 
-### Windows
+- Java launcher shell for Minecraft detection and launch
+- dark purple launcher interface
+- local JDK bootstrapping without Maven
+- Fabric client starter project under `fabric-client/`
+- custom HUD groundwork for a premium client look
 
-1. Install and compile Java locally with:
+## Launcher
 
-```bat
-install.bat
-```
+- `install.bat` / `install.sh` downloads a local Java 17 if needed
+- `run-launcher.bat` / `run-launcher.sh` compiles and launches the launcher
+- the launcher auto-detects the Minecraft folder and launcher executable when present
 
-2. Launch the app:
+## Fabric client
 
-```bat
-run-launcher.bat
-```
+The folder `fabric-client/` contains the start of a Fabric client mod:
+- custom HUD rendering
+- client entrypoint
+- Fabric config
+- dark purple themed overlay
 
-### macOS / Linux
+### Run the Fabric client
 
 ```bash
-chmod +x install.sh run-launcher.sh
-./install.sh
-./run-launcher.sh
+cd fabric-client
+./gradlew build
 ```
 
-## Notes
+Then install the generated jar into your Minecraft instance's `mods` directory.
 
-This project no longer requires Maven.
-It uses a local Java 17 installation downloaded into:
+## Important note
 
-- `%USERPROFILE%\.grave-client\tools\jdk-17`
-- `$HOME/.grave-client/tools/jdk-17`
-
-Then it compiles the launcher directly with `javac` and runs it with `java`.
-This keeps the project portable and removes the Maven dependency entirely.
+This is still a foundation, not a full commercial client like Lunar. It is a playable starter architecture for a custom dark purple Minecraft client, with the launcher and Fabric client layers separated cleanly.
