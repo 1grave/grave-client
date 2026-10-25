@@ -6,13 +6,19 @@ A dark, purple-themed Minecraft launcher and installer concept built to match th
 
 ### Windows
 
-1. Double-click `install.bat`
-2. The installer will check for Java and Maven and install them automatically if needed.
-3. Then run `run-launcher.bat`
+1. Install and compile Java locally with:
+
+```bat
+install.bat
+```
+
+2. Launch the app:
+
+```bat
+run-launcher.bat
+```
 
 ### macOS / Linux
-
-1. Run:
 
 ```bash
 chmod +x install.sh run-launcher.sh
@@ -20,13 +26,13 @@ chmod +x install.sh run-launcher.sh
 ./run-launcher.sh
 ```
 
-2. The installer will install Java and Maven automatically if they are missing.
-
 ## Notes
 
-This is a launcher starter for a custom Minecraft client. It includes:
-- an installer script
-- automatic Java/Maven installation
-- a dark purple launcher UI
-- install/config folder creation
-- launch support for a client jar or executable
+This project no longer requires Maven.
+It uses a local Java 17 installation downloaded into:
+
+- `%USERPROFILE%\.grave-client\tools\jdk-17`
+- `$HOME/.grave-client/tools/jdk-17`
+
+Then it compiles the launcher directly with `javac` and runs it with `java`.
+This keeps the project portable and removes the Maven dependency entirely.

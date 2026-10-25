@@ -1,44 +1,37 @@
 #!/usr/bin/env bash
 set -e
 
-if ! command -v java >/dev/null 2>&1; then
-  echo "Java 17+ is required but was not found on PATH."
-  echo "Attempting to install OpenJDK 17 via apt..."
-  if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y openjdk-17-jdk
-  elif command -v brew >/dev/null 2>&1; then
-    brew install openjdk@17
-  elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y java-17-openjdk
+TOOL_ROOT="$HOME/.grave-client/tools"
+JAVA_DIR="$TOOL_ROOT/jdk-17"
+JAVA_EXE="$JAVA_DIR/bin/java"
+BUILD_DIR="$HOME/.grave-client/build"
+
+if [ ! -x "$JAVA_EXE" ]; then
+  echo "Java 17 not found. Downloading local JDK..."
+  mkdir -p "$TOOL_ROOT"
+
+  if [ "$(uname -s)" = "Darwin" ]; then
+    JDK_URL="https://aka.ms/download-jdk/microsoft-jdk-17-macOS-x64.tar.gz"
   else
-    echo "Could not find a supported package manager to install Java 17."
-    echo "Please install Java 17 manually, then rerun this installer."
-    exit 1
+    JDK_URL="https://aka.ms/download-jdk/microsoft-jdk-17-linux-x64.tar.gz"
   fi
+
+  curl -L "$JDK_URL" -o "/tmp/grave-jdk17.tar.gz"
+  tar -xzf "/tmp/grave-jdk17.tar.gz" -C "$TOOL_ROOT"
+  mv "$TOOL_ROOT"/jdk-* "$JAVA_DIR"
 fi
 
-if ! command -v mvn >/dev/null 2>&1; then
-  echo "Maven was not found. Attempting to install Maven via apt..."
-  if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y maven
-  elif command -v brew >/dev/null 2>&1; then
-    brew install maven
-  elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y maven
-  else
-    echo "Could not find a supported package manager to install Maven."
-    echo "Please install Maven manually, then rerun this installer."
-    exit 1
-  fi
+if [ ! -x "$JAVA_EXE" ]; then
+  echo "Failed to install local Java 17."
+  exit 1
 fi
 
-mkdir -p "$HOME/.grave-client" "$HOME/.grave-client/mods" "$HOME/.grave-client/config" "$HOME/.grave-client/assets" "$HOME/.grave-client/logs"
+mkdir -p "$HOME/.grave-client" "$HOME/.grave-client/mods" "$HOME/.grave-client/config" "$HOME/.grave-client/assets" "$HOME/.grave-client/logs" "$BUILD_DIR"
 
 echo "Created install folders at $HOME/.grave-client"
-echo "Building launcher..."
-mvn -q -DskipTests package
+echo "Compiling launcher with local JDK..."
+"$JAVA_EXE" -version
+"$JAVA_DIR/bin/javac" -d "$BUILD_DIR" -sourcepath src/main/java $(find src/main/java -name "*.java")
 
 echo
 

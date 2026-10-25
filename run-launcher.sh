@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-if ! command -v java >/dev/null 2>&1; then
-  echo "Java 17+ is required but was not found on PATH."
-  echo "Please install Java 17 or newer and try again."
+TOOL_ROOT="$HOME/.grave-client/tools"
+JAVA_DIR="$TOOL_ROOT/jdk-17"
+JAVA_EXE="$JAVA_DIR/bin/java"
+BUILD_DIR="$HOME/.grave-client/build"
+
+if [ ! -x "$JAVA_EXE" ]; then
+  echo "Java 17 is required but was not found."
+  echo "Run ./install.sh first."
   exit 1
 fi
 
-if ! command -v mvn >/dev/null 2>&1; then
-  echo "Maven is required but was not found on PATH."
-  echo "Please install Maven and try again."
-  exit 1
-fi
-
-mvn -q -DskipTests package
-java -jar target/grave-launcher-1.0.0.jar
+mkdir -p "$BUILD_DIR"
+"$JAVA_DIR/bin/javac" -d "$BUILD_DIR" -sourcepath src/main/java $(find src/main/java -name "*.java")
+"$JAVA_EXE" -cp "$BUILD_DIR" com.grave.launcher.LauncherApp

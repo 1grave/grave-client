@@ -1,30 +1,27 @@
 @echo off
 setlocal
 
-where java >nul 2>nul
-if errorlevel 1 (
-  echo Java 17+ is required but was not found on PATH.
-  echo Please install Java 17 or newer and try again.
+set TOOL_ROOT=%USERPROFILE%\.grave-client\tools
+set JAVA_DIR=%TOOL_ROOT%\jdk-17
+set JAVA_EXE=%JAVA_DIR%\bin\java.exe
+set BUILD_DIR=%USERPROFILE%\.grave-client\build
+
+if not exist "%JAVA_EXE%" (
+  echo Java 17 is required but was not found.
+  echo Run install.bat first.
   pause
   exit /b 1
 )
 
-where mvn >nul 2>nul
+mkdir "%BUILD_DIR%" 2>nul
+"%JAVA_DIR%\bin\javac.exe" -d "%BUILD_DIR%" -sourcepath src/main/java src/main/java/com/grave/launcher/*.java
 if errorlevel 1 (
-  echo Maven is required but was not found on PATH.
-  echo Please install Maven and try again.
+  echo Compilation failed.
   pause
   exit /b 1
 )
 
-call mvn -q -DskipTests package
-if errorlevel 1 (
-  echo Build failed.
-  pause
-  exit /b 1
-)
-
-java -jar target\grave-launcher-1.0.0.jar
+"%JAVA_EXE%" -cp "%BUILD_DIR%" com.grave.launcher.LauncherApp
 if errorlevel 1 (
   echo Launcher failed to start.
   pause
