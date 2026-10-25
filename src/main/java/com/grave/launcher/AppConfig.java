@@ -11,9 +11,9 @@ public class AppConfig {
     private static final String DEFAULT_INSTALL_DIR = System.getProperty("user.home") + "/.grave-client";
 
     private String installDir = DEFAULT_INSTALL_DIR;
-    private String gameDir = Paths.get(System.getProperty("user.home"), ".minecraft").toString();
+    private String gameDir = detectMinecraftDirectory();
     private String javaExecutable = "java";
-    private String clientExecutable = "";
+    private String clientExecutable = detectMinecraftLauncher();
     private String clientJar = "";
     private String[] launchArgs = new String[0];
     private boolean firstRun = true;
@@ -64,6 +64,84 @@ public class AppConfig {
         } catch (IOException e) {
             throw new IllegalStateException("Unable to save configuration", e);
         }
+    }
+
+    public static String detectMinecraftDirectory() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String userHome = System.getProperty("user.home");
+
+        if (os.contains("win")) {
+            String[] candidates = {
+                Paths.get(System.getenv("APPDATA") != null ? System.getenv("APPDATA") : userHome, ".minecraft").toString(),
+                Paths.get(System.getenv("LOCALAPPDATA") != null ? System.getenv("LOCALAPPDATA") : userHome, ".minecraft").toString(),
+                Paths.get(userHome, "AppData", "Roaming", ".minecraft").toString(),
+                Paths.get(userHome, "AppData", "Local", ".minecraft").toString(),
+                Paths.get(userHome, ".minecraft").toString()
+            };
+            for (String candidate : candidates) {
+                if (Files.exists(Path.of(candidate))) {
+                    return candidate;
+                }
+            }
+        }
+
+        if (os.contains("mac")) {
+            String[] candidates = {
+                Paths.get(userHome, "Library", "Application Support", "minecraft").toString(),
+                Paths.get(userHome, ".minecraft").toString()
+            };
+            for (String candidate : candidates) {
+                if (Files.exists(Path.of(candidate))) {
+                    return candidate;
+                }
+            }
+        }
+
+        String[] candidates = {
+            Paths.get(userHome, ".minecraft").toString(),
+            "/var/games/minecraft",
+            "/opt/minecraft"
+        };
+        for (String candidate : candidates) {
+            if (Files.exists(Path.of(candidate))) {
+                return candidate;
+            }
+        }
+
+        return Paths.get(userHome, ".minecraft").toString();
+    }
+
+    public static String detectMinecraftLauncher() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String userHome = System.getProperty("user.home");
+
+        if (os.contains("win")) {
+            String[] candidates = {
+                Paths.get(System.getenv("LOCALAPPDATA") != null ? System.getenv("LOCALAPPDATA") : userHome, "Programs", "Minecraft Launcher", "MinecraftLauncher.exe").toString(),
+                Paths.get(System.getenv("APPDATA") != null ? System.getenv("APPDATA") : userHome, ".minecraft", "MinecraftLauncher.exe").toString(),
+                Paths.get(userHome, "AppData", "Local", "Programs", "Minecraft Launcher", "MinecraftLauncher.exe").toString(),
+                Paths.get(userHome, "AppData", "Roaming", ".minecraft", "MinecraftLauncher.exe").toString()
+            };
+            for (String candidate : candidates) {
+                if (Files.exists(Path.of(candidate))) {
+                    return candidate;
+                }
+            }
+        }
+
+        if (os.contains("mac")) {
+            String[] candidates = {
+                "/Applications/Minecraft.app/Contents/MacOS/launcher",
+                Paths.get(userHome, "Applications", "Minecraft.app", "Contents", "MacOS", "launcher").toString()
+            };
+            for (String candidate : candidates) {
+                if (Files.exists(Path.of(candidate))) {
+                    return candidate;
+                }
+            }
+        }
+
+        return "";
     }
 
     public String getInstallDir() {

@@ -1,7 +1,6 @@
 package com.grave.launcher;
 
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -10,7 +9,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -19,9 +17,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,9 +26,7 @@ import java.util.List;
 
 public class LauncherFrame extends JFrame {
     private static final Color BG = new Color(11, 9, 18);
-    private static final Color PANEL = new Color(19, 16, 28);
     private static final Color BORDER = new Color(164, 103, 255);
-    private static final Color ACCENT = new Color(250, 85, 210);
     private static final Color TEXT = new Color(245, 240, 255);
     private static final Color MUTED = new Color(170, 155, 200);
 
@@ -148,7 +141,7 @@ public class LauncherFrame extends JFrame {
         gamePath.setBounds(40, 338, 340, 24);
         panel.add(gamePath);
 
-        JLabel clientPath = new JLabel("Client: " + (config.getClientJar().isBlank() ? "not set" : config.getClientJar()));
+        JLabel clientPath = new JLabel("Client: " + (config.getClientExecutable().isBlank() ? "not set" : config.getClientExecutable()));
         clientPath.setFont(new Font("Monospaced", Font.PLAIN, 12));
         clientPath.setForeground(MUTED);
         clientPath.setBounds(40, 366, 340, 24);
@@ -184,23 +177,36 @@ public class LauncherFrame extends JFrame {
 
     private void launchClient() {
         try {
+            String executable = config.getClientExecutable();
+            String jar = config.getClientJar();
             List<String> command = new ArrayList<>();
-            if (config.getClientJar() != null && !config.getClientJar().isBlank()) {
+
+            if (jar != null && !jar.isBlank() && Files.exists(Path.of(jar))) {
                 command.add(config.getJavaExecutable());
                 command.add("-jar");
-                command.add(config.getClientJar());
+                command.add(jar);
                 command.addAll(Arrays.asList(config.getLaunchArgs()));
-            } else if (config.getClientExecutable() != null && !config.getClientExecutable().isBlank()) {
-                command.add(config.getClientExecutable());
+            } else if (executable != null && !executable.isBlank() && Files.exists(Path.of(executable))) {
+                command.add(executable);
             } else {
-                JOptionPane.showMessageDialog(this, "No client is configured. Please install or set a target executable.", "Launcher", JOptionPane.WARNING_MESSAGE);
-                return;
+                String detected = AppConfig.detectMinecraftLauncher();
+                if (!detected.isBlank() && Files.exists(Path.of(detected))) {
+                    config.setClientExecutable(detected);
+                    config.save();
+                    command.add(detected);
+                } else {
+                    JOptionPane.showMessageDialog(this, "No Minecraft launcher was found. Please set the path in Settings.", "Launcher", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
             }
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.directory(new FileFromPath(config.getInstallDir()));
             pb.inheritIO();
-            pb.start();
+            Process process = pb.start();
+            if (process.isAlive()) {
+                System.out.println("Minecraft launcher started successfully.");
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Launch failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -210,12 +216,14 @@ public class LauncherFrame extends JFrame {
         JTextField installField = new JTextField(config.getInstallDir(), 28);
         JTextField gameField = new JTextField(config.getGameDir(), 28);
         JTextField javaField = new JTextField(config.getJavaExecutable(), 28);
+        JTextField executableField = new JTextField(config.getClientExecutable(), 28);
         JTextField jarField = new JTextField(config.getClientJar(), 28);
 
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gc = new GridBagConstraints();
         gc.insets = new Insets(5, 5, 5, 5);
         gc.fill = GridBagConstraints.HORIZONTAL;
+
         gc.gridx = 0; gc.gridy = 0; panel.add(new JLabel("Install Dir:"), gc);
         gc.gridx = 1; panel.add(installField, gc);
 
@@ -225,7 +233,10 @@ public class LauncherFrame extends JFrame {
         gc.gridx = 0; gc.gridy = 2; panel.add(new JLabel("Java:"), gc);
         gc.gridx = 1; panel.add(javaField, gc);
 
-        gc.gridx = 0; gc.gridy = 3; panel.add(new JLabel("Client Jar:"), gc);
+        gc.gridx = 0; gc.gridy = 3; panel.add(new JLabel("Launcher EXE:"), gc);
+        gc.gridx = 1; panel.add(executableField, gc);
+
+        gc.gridx = 0; gc.gridy = 4; panel.add(new JLabel("Client Jar:"), gc);
         gc.gridx = 1; panel.add(jarField, gc);
 
         int result = JOptionPane.showConfirmDialog(this, panel, "Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -233,6 +244,7 @@ public class LauncherFrame extends JFrame {
             config.setInstallDir(installField.getText());
             config.setGameDir(gameField.getText());
             config.setJavaExecutable(javaField.getText());
+            config.setClientExecutable(executableField.getText());
             config.setClientJar(jarField.getText());
             config.save();
             JOptionPane.showMessageDialog(this, "Settings saved.");
